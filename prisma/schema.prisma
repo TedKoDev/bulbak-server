@@ -69,6 +69,7 @@ model SearchTerm {
   collected_at DateTime      @default(now())
   deleted_at   DateTime?
   source       PortalSource  @relation(fields: [source_id], references: [id])
+  keywordLinks SearchTermKeywordLink[]
 }
 
 model Keyword {
@@ -82,16 +83,17 @@ model Keyword {
   deleted_at  DateTime?
   prompt      Prompt?       @relation(fields: [prompt_id], references: [id])
   posts       BlogPost[]
+  searchLinks SearchTermKeywordLink[]
+  crawlLinks  CrawledDataKeywordLink[]
 }
 
-model Prompt {
-  id         Int          @id @default(autoincrement())
-  type       PromptType
-  content    String
-  created_at DateTime     @default(now())
-  updated_at DateTime     @default(now())
-  deleted_at DateTime?
-  keywords   Keyword[]
+model SearchTermKeywordLink {
+  id             Int         @id @default(autoincrement())
+  search_term    SearchTerm  @relation(fields: [search_term_id], references: [id])
+  search_term_id Int
+  keyword        Keyword     @relation(fields: [keyword_id], references: [id])
+  keyword_id     Int
+  created_at     DateTime    @default(now())
 }
 
 model CrawledData {
@@ -104,6 +106,26 @@ model CrawledData {
   collected_at DateTime  @default(now())
   created_at   DateTime  @default(now())
   deleted_at   DateTime?
+  keywordLinks CrawledDataKeywordLink[]
+}
+
+model CrawledDataKeywordLink {
+  id              Int         @id @default(autoincrement())
+  crawled_data    CrawledData @relation(fields: [crawled_data_id], references: [id])
+  crawled_data_id Int
+  keyword         Keyword     @relation(fields: [keyword_id], references: [id])
+  keyword_id      Int
+  created_at      DateTime    @default(now())
+}
+
+model Prompt {
+  id         Int          @id @default(autoincrement())
+  type       PromptType
+  content    String
+  created_at DateTime     @default(now())
+  updated_at DateTime     @default(now())
+  deleted_at DateTime?
+  keywords   Keyword[]
 }
 
 model BlogChannel {

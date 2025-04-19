@@ -54,7 +54,20 @@ AI 기반 자동화 블로그 콘텐츠 퍼블리싱 시스템
 
 ---
 
-## 4. DB 구조 요약
+## 4. 시스템 로직 요약
+
+- 실시간 검색어와 크롤링 데이터를 주기적으로 저장 (1분)
+- 1시간마다 자동으로 `SearchTerm`과 `CrawledData`를 통합 분석하여 유사 키워드를 그룹핑
+- 전처리(normalize) 및 중복 필터링 후 대표 키워드 생성
+- `SearchTermKeywordLink` 및 `CrawledDataKeywordLink` 테이블로 키워드 생성 원본 연결
+- AI API는 제목과 본문을 생성할 때만 사용
+- 비용 최적화를 위해 GPT 호출은 글 생성 시점에서만 수행하며, 추출된 키워드는 단순 로직으로 처리
+
+---
+
+## 5. DB 구조 요약
+
+> 자세한 Prisma 모델은 `prisma/schema.prisma`를 참조
 
 ![Bulbak 시스템 흐름도](./images/DBML.png)
 
@@ -63,8 +76,10 @@ AI 기반 자동화 블로그 콘텐츠 퍼블리싱 시스템
 - `PortalSource`: 검색어 수집 출처
 - `SearchTerm`: 원본 실시간 검색어 로그
 - `Keyword`: 최종 선정된 유효 키워드
-- `Prompt`: 콘텐츠 유형별 GPT 프롬프트
+- `SearchTermKeywordLink`: 어떤 검색어가 어떤 키워드를 유도했는지 연결
 - `CrawledData`: 기사/채용 등 외부 데이터 크롤링 결과
+- `CrawledDataKeywordLink`: 어떤 크롤링 데이터가 어떤 키워드와 연관됐는지 추적
+- `Prompt`: 콘텐츠 유형별 GPT 프롬프트
 - `BlogPost`: 생성된 블로그 글 및 게시 상태
 - `BlogChannel`: 블로그 플랫폼별 인증 정보 및 포스팅 대상
 - `PlatformLog`: 외부 SNS 플랫폼 게시 기록
@@ -72,37 +87,29 @@ AI 기반 자동화 블로그 콘텐츠 퍼블리싱 시스템
 - `ButtonTemplate` / `Button`: 버튼 템플릿 및 인스턴스
 - `AiApiKey`: AI API 키 관리 (여러 플랫폼 지원)
 
-### 🔹 주요 ENUM
-
-- `KeywordStatus`: 키워드 상태 (PENDING, SELECTED, REJECTED)
-- `PromptType`: 프롬프트 유형 (BLOG, NEWS 등)
-- `PublishStatus`: 게시 상태 (SUCCESS, FAILED 등)
-- `AiProvider`: AI 제공자 구분 (OPENAI, GROK 등)
-- `BlogPlatform`: 블로그 플랫폼 (Blogger, Tistory 등)
-
 ---
 
-## 5. 초기 실행 가이드
+## 6. 초기 실행 가이드
 
-### 5.1 NestJS 프로젝트 설치
+### 6.1 NestJS 프로젝트 설치
 
 ```bash
 pnpm install
 ```
 
-### 5.2 Prisma DB 마이그레이션 적용
+### 6.2 Prisma DB 마이그레이션 적용
 
 ```bash
 pnpm prisma migrate dev --name init
 ```
 
-### 5.3 Prisma Client 생성 (필요 시)
+### 6.3 Prisma Client 생성 (필요 시)
 
 ```bash
 pnpm prisma generate
 ```
 
-### 5.4 기본 데이터 시드 실행
+### 6.4 기본 데이터 시드 실행
 
 ```bash
 pnpm tsx prisma/seed.ts
@@ -116,16 +123,59 @@ pnpm prisma db seed
 
 ---
 
-## 6. 향후 개발 계획
+## 7. 향후 개발 계획
 
-- [ ] Python 기반 크롤러 서버 연동
-- [ ] pgvector 확장을 통한 유사 키워드 비교 로직 구현
+- [x] Python 기반 크롤러 서버 연동
+- [x] 키워드 자동 생성 로직 설계 (1시간 단위)
+- [x] SearchTerm / CrawledData 기반 다대다 연결 테이블 구성
+- [ ] pgvector 확장을 통한 의미 유사 키워드 비교 로직 구현
 - [ ] 관리자 UI 웹 대시보드 구축
 - [ ] SaaS 혹은 상용 서비스화 고려 (유료화 모델 검토 포함)
 
 ---
 
-## 7. 부록: 프로젝트 목표 요약
+## 8. AI 사용 전략 및 키워드 생성 철학
+
+### 🔍 키워드 vs. 콘텐츠 생성 분리 전략
+
+- **키워드는 전처리 기반 유사 키워드 매칭으로 생성**
+
+  - PostgreSQL의 LIKE, ILIKE, Levenshtein 등 텍스트 기반 비교 활용
+  - 비용 없이 빠르게 중복 제거 및 대표 키워드 생성 가능
+  - 추후 `pgvector` 등 임베딩 확장 고려 가능
+
+- **제목과 본문은 AI를 통해 생성**
+  - GPT, Claude, DeepSeek, Gemini 등 사용 가능
+  - 프롬프트 기반 구조로 다양한 글 유형 지원
+  - 비용 부담이 있기 때문에 **글 작성 시점에만 호출**하여 효율성 확보
+
+### 💡 실제 활용 예시: "황희찬"
+
+```
+검색어:
+- 황희찬 출전
+- 황희찬 부상 소식
+- 황희찬 인터뷰
+
+→ 키워드: "황희찬"
+→ GPT 생성 제목 예시:
+- "황희찬 최근 부상 소식과 복귀 전망"
+- "황희찬 인터뷰 정리: 훈련 루틴과 목표"
+```
+
+### 📊 로직 흐름 요약
+
+1. `SearchTerm`, `CrawledData` 1분 단위 수집
+2. 1시간 단위 집계 후:
+   - normalize + 유사어 그룹핑
+   - 대표 키워드 생성 (Keyword)
+   - `SearchTermKeywordLink`, `CrawledDataKeywordLink` 연결
+3. 선택된 키워드 → GPT 호출로 제목/본문 생성
+4. `BlogPost` 저장 후 블로그/SNS 업로드
+
+---
+
+## 9. 부록: 프로젝트 목표 요약
 
 > "키워드 수집부터 콘텐츠 제작, 이미지화, 포스팅, 외부 채널 공유까지.  
 > 사람이 개입하지 않아도 콘텐츠는 흘러간다. 그게 바로 Bulbak의 철학이다."
