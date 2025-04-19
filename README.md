@@ -56,6 +56,8 @@ AI 기반 자동화 블로그 콘텐츠 퍼블리싱 시스템
 
 ## 4. DB 구조 요약
 
+![Bulbak 시스템 흐름도](./images/DBML.png)
+
 ### 🔹 주요 테이블
 
 - `PortalSource`: 검색어 수집 출처
