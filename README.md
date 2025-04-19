@@ -38,6 +38,7 @@ AI 기반 자동화 블로그 콘텐츠 퍼블리싱 시스템
 ### 2.5 관리자 기능 (향후)
 
 - 웹 기반 관리자 UI에서 상태 모니터링, 수동 승인, 수익 조회 등 지원 예정
+- 수동 수집 키워드 등록 및 콘텐츠 수동 생성/수정 API 제공
 
 ---
 
@@ -62,6 +63,17 @@ AI 기반 자동화 블로그 콘텐츠 퍼블리싱 시스템
 - `SearchTermKeywordLink` 및 `CrawledDataKeywordLink` 테이블로 키워드 생성 원본 연결
 - AI API는 제목과 본문을 생성할 때만 사용
 - 비용 최적화를 위해 GPT 호출은 글 생성 시점에서만 수행하며, 추출된 키워드는 단순 로직으로 처리
+
+```mermaid
+graph TD
+  A[크롤링된 실시간 검색어] --> C[generateKeywordsFromRecentData()]
+  B[크롤링된 기사(ARTICLE/JOB)] --> C
+  D[정책 크롤링 데이터] --> E[generateKeywordsFromCrawledType(type)]
+  C --> F[normalizeText()로 그룹핑]
+  E --> F
+  F --> G[Keyword 생성 및 저장]
+  G --> H[연관 테이블 연결 (SearchTerm/CrawledData)]
+```
 
 ---
 
@@ -128,6 +140,7 @@ pnpm prisma db seed
 - [x] Python 기반 크롤러 서버 연동
 - [x] 키워드 자동 생성 로직 설계 (1시간 단위)
 - [x] SearchTerm / CrawledData 기반 다대다 연결 테이블 구성
+- [x] 특정 CrawledData 유형에 따라 별도로 키워드 생성 (e.g. 정책, 채용)
 - [ ] pgvector 확장을 통한 의미 유사 키워드 비교 로직 구현
 - [ ] 관리자 UI 웹 대시보드 구축
 - [ ] SaaS 혹은 상용 서비스화 고려 (유료화 모델 검토 포함)
@@ -172,6 +185,7 @@ pnpm prisma db seed
    - `SearchTermKeywordLink`, `CrawledDataKeywordLink` 연결
 3. 선택된 키워드 → GPT 호출로 제목/본문 생성
 4. `BlogPost` 저장 후 블로그/SNS 업로드
+5. 정책/채용 크롤링은 `generateKeywordsFromCrawledType()`을 통해 별도 처리 가능 (ARTICLE/JOB 기준)
 
 ---
 
@@ -179,6 +193,79 @@ pnpm prisma db seed
 
 > "키워드 수집부터 콘텐츠 제작, 이미지화, 포스팅, 외부 채널 공유까지.  
 > 사람이 개입하지 않아도 콘텐츠는 흘러간다. 그게 바로 Bulbak의 철학이다."
+
+## 10. 키워드 생성 실행 방식 요약
+
+**Bulbak 시스템**은 키워드 생성 로직을 다양한 방식으로 유연하게 실행할 수 있도록 설계되었습니다.  
+운영 목적이나 상황에 따라 아래 방식 중 하나 또는 복합적으로 사용할 수 있습니다.
+
+---
+
+### ✅ 1. **NestJS 내부 스케줄러 실행 (`node-cron`)**
+
+- NestJS 서버 내에서 `node-cron` 모듈을 활용한 주기적 실행
+- 예: `매 1시간마다` 자동으로 키워드 생성
+- 추후 관리자 페이지에서 스케줄 on/off API 제공 예정
+
+```bash
+pnpm add node-cron
+```
+
+---
+
+### ✅ 2. **독립 실행 (`keyword.runner.ts`)**
+
+- NestJS 서버와 별개로 CLI에서 단독 실행 가능한 방식
+- 서버가 꺼져 있어도 keyword 생성을 외부에서 주기 실행 가능 (ex. `crontab`, `pm2`, `systemd`)
+- 배치형 운영에 적합
+
+```bash
+pnpm tsx src/scheduler/keyword.runner.ts
+```
+
+```ts
+// 실행 내부 로직 예시:
+await keywordService.generateKeywordsFromRecentData();
+await keywordService.generateKeywordsFromCrawledType('ARTICLE', 24);
+await keywordService.generateKeywordsFromCrawledType('JOB', 48);
+```
+
+---
+
+### ✅ 3. **API 수동 트리거 방식 (관리자 웹 연동)**
+
+- NestJS API를 통해 수동으로 키워드 생성을 요청할 수 있음
+- 대시보드에서 "실행" 버튼을 클릭해 키워드 수동 생성
+- 자동화 이외에 수동 통제 및 테스트 목적에 유용
+
+```http
+POST /keywords/generate/recent
+```
+
+```http
+POST /keywords/generate/crawled
+Content-Type: application/json
+
+{
+  "type": "ARTICLE",
+  "hours": 24
+}
+```
+
+---
+
+### 📊 실행 방식 비교
+
+| 실행 방식           | 설명                                         | 서버 필요 | 자동 실행 | 수동 실행 |
+| ------------------- | -------------------------------------------- | --------- | --------- | --------- |
+| `node-cron`         | NestJS 내에서 설정한 주기적 실행             | ✅        | ✅        | ❌        |
+| `keyword.runner.ts` | Nest 서버 없이 CLI로 단독 실행 가능          | ❌        | ✅ (외부) | ✅        |
+| REST API 트리거     | 관리자 페이지에서 요청 → 서비스 단 수동 실행 | ✅        | ❌        | ✅        |
+
+---
+
+> 💡 목적에 맞는 실행 방식을 선택하여 운영하세요.  
+> 복합적으로 병행 사용하면 실시간 자동화 + 수동 통제가 모두 가능합니다.
 
 ---
 
