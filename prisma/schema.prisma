@@ -1,15 +1,215 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma schema for Bulbak project
+// Generated from finalized DBML structure
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum KeywordStatus {
+  PENDING
+  SELECTED
+  REJECTED
+}
+
+enum PromptType {
+  BLOG
+  NEWS
+  JOB
+  COMMENTARY
+}
+
+enum DataType {
+  ARTICLE
+  JOB
+  RAW
+}
+
+enum PublishStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  RETRYING
+}
+
+enum AiProvider {
+  OPENAI
+  GEMINI
+  GROK
+  CUSTOM
+}
+
+enum BlogPlatform {
+  BLOGGER
+  TISTORY
+  WORDPRESS
+  NAVER
+  CUSTOM
+}
+
+model PortalSource {
+  id         Int           @id @default(autoincrement())
+  name       String        @unique
+  url        String?
+  created_at DateTime      @default(now())
+  updated_at DateTime      @default(now())
+  deleted_at DateTime?
+  keywords   SearchTerm[]
+}
+
+model SearchTerm {
+  id           Int           @id @default(autoincrement())
+  keyword      String
+  source_id    Int
+  collected_at DateTime      @default(now())
+  deleted_at   DateTime?
+  source       PortalSource  @relation(fields: [source_id], references: [id])
+}
+
+model Keyword {
+  id          Int           @id @default(autoincrement())
+  text        String
+  status      KeywordStatus @default(PENDING)
+  priority    Int?
+  prompt_id   Int?
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @default(now())
+  deleted_at  DateTime?
+  prompt      Prompt?       @relation(fields: [prompt_id], references: [id])
+  posts       BlogPost[]
+}
+
+model Prompt {
+  id         Int          @id @default(autoincrement())
+  type       PromptType
+  content    String
+  created_at DateTime     @default(now())
+  updated_at DateTime     @default(now())
+  deleted_at DateTime?
+  keywords   Keyword[]
+}
+
+model CrawledData {
+  id           Int       @id @default(autoincrement())
+  site         String
+  url          String    @unique
+  type         DataType
+  title        String?
+  content      String?
+  collected_at DateTime  @default(now())
+  created_at   DateTime  @default(now())
+  deleted_at   DateTime?
+}
+
+model BlogChannel {
+  id             Int           @id @default(autoincrement())
+  name           String        @unique
+  platform       BlogPlatform
+  base_url       String?
+  client_id      String?
+  client_secret  String?
+  access_token   String?
+  refresh_token  String?
+  is_active      Boolean       @default(true)
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @default(now())
+  deleted_at     DateTime?
+  posts          BlogPost[]
+}
+
+model BlogPost {
+  id              Int           @id @default(autoincrement())
+  keyword_id      Int
+  blog_channel_id Int
+  title           String
+  content         String?
+  publish_status  PublishStatus @default(PENDING)
+  published_at    DateTime?
+  blog_type       String?
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @default(now())
+  deleted_at      DateTime?
+  keyword         Keyword       @relation(fields: [keyword_id], references: [id])
+  blog_channel    BlogChannel   @relation(fields: [blog_channel_id], references: [id])
+  platform_logs   PlatformLog[]
+  thumbnails      Thumbnail[]
+  buttons         Button[]
+}
+
+model PlatformLog {
+  id         Int       @id @default(autoincrement())
+  post_id    Int
+  platform   String
+  url        String?
+  posted_at  DateTime
+  created_at DateTime  @default(now())
+  deleted_at DateTime?
+  post       BlogPost  @relation(fields: [post_id], references: [id])
+}
+
+model AiApiKey {
+  id           Int        @id @default(autoincrement())
+  name         String     @unique
+  provider     AiProvider
+  base_url     String?
+  client_key   String
+  secret_key   String
+  model_name   String?
+  is_active    Boolean     @default(true)
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @default(now())
+  deleted_at   DateTime?
+}
+
+model ThumbnailTemplate {
+  id           Int       @id @default(autoincrement())
+  name         String    @unique
+  description  String?
+  html_content String
+  is_active    Boolean   @default(true)
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @default(now())
+  deleted_at   DateTime?
+  thumbnails   Thumbnail[]
+}
+
+model Thumbnail {
+  id            Int       @id @default(autoincrement())
+  blog_post_id  Int
+  template_id   Int
+  title_text    String?
+  image_url     String?
+  created_at    DateTime  @default(now())
+  deleted_at    DateTime?
+  blog_post     BlogPost  @relation(fields: [blog_post_id], references: [id])
+  template      ThumbnailTemplate @relation(fields: [template_id], references: [id])
+}
+
+model ButtonTemplate {
+  id           Int       @id @default(autoincrement())
+  name         String    @unique
+  description  String?
+  html_content String
+  is_active    Boolean   @default(true)
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @default(now())
+  deleted_at   DateTime?
+  buttons      Button[]
+}
+
+model Button {
+  id            Int       @id @default(autoincrement())
+  blog_post_id  Int
+  template_id   Int
+  text          String
+  link_url      String
+  position      String
+  created_at    DateTime  @default(now())
+  deleted_at    DateTime?
+  blog_post     BlogPost  @relation(fields: [blog_post_id], references: [id])
+  template      ButtonTemplate @relation(fields: [template_id], references: [id])
 }
