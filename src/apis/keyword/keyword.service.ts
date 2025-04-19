@@ -164,4 +164,11 @@ export class KeywordService {
 
     return created;
   }
+  // src/apis/keyword/keyword.service.ts
+  async updateStatus(id: number, status: KeywordStatus) {
+    return this.prisma.keyword.update({
+      where: { id },
+      data: { status },
+    });
+  }
 }

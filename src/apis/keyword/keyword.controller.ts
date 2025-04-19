@@ -1,6 +1,6 @@
 // src/apis/keyword/keyword.controller.ts
-import { Controller, Post, Body, HttpCode } from '@nestjs/common';
-import { CreateKeywordDto } from './dto/create-keyword.dto';
+import { Controller, Post, Body, HttpCode, Patch, Param } from '@nestjs/common';
+import { CreateKeywordDto, KeywordStatus } from './dto/create-keyword.dto';
 import { KeywordService } from './keyword.service';
 
 @Controller('keywords')
@@ -31,5 +31,29 @@ export class KeywordController {
   ) {
     const { type, hours = 24 } = body;
     return this.keywordService.generateKeywordsFromCrawledType(type, hours);
+  }
+
+  /**
+   * 키워드 상태 수동 업데이트 (PENDING → SELECTED/REJECTED)
+   */
+
+  @Patch(':id/status')
+  async updateStatus(
+    @Param('id') id: number,
+    @Body() body: { status: 'PENDING' | 'SELECTED' | 'REJECTED' },
+  ) {
+    const status = KeywordStatus[body.status as keyof typeof KeywordStatus];
+    return this.keywordService.updateStatus(Number(id), status);
+  }
+  /**
+   * 수동 키워드 직접 입력을 위한 API (단일 입력)
+   */
+  @Post('manual')
+  async createManualKeyword(@Body() dto: { text: string; priority?: number }) {
+    return this.keywordService.createKeyword({
+      text: dto.text,
+      priority: dto.priority ?? 0,
+      status: KeywordStatus.SELECTED,
+    });
   }
 }
