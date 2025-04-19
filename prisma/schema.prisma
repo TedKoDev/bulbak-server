@@ -64,6 +64,7 @@ model PortalSource {
 model SearchTerm {
   id           Int           @id @default(autoincrement())
   keyword      String
+  rank         Int
   source_id    Int
   collected_at DateTime      @default(now())
   deleted_at   DateTime?
