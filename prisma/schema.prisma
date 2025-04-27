@@ -1,5 +1,4 @@
-// Prisma schema for Bulbak project
-// Generated from finalized DBML structure
+// 통합 Prisma 스키마 - Bulbak + Devoo
 
 generator client {
   provider = "prisma-client-js"
@@ -9,6 +8,8 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// ===== ENUMS =====
 
 enum KeywordStatus {
   PENDING
@@ -51,8 +52,57 @@ enum BlogPlatform {
   CUSTOM
 }
 
+enum MarketType {
+  STOCK_MARKET
+  STOCK
+  EXCHANGE_RATE
+  GOLD
+  OIL
+}
+
+enum ToolRequestStatus {
+  REQUESTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum Impact {
+  POSITIVE
+  NEGATIVE
+  NEUTRAL
+}
+
+enum Importance {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum MarketEventCategory {
+  ECONOMIC
+  EARNINGS
+  IPO
+  DIVIDEND
+  POLICY
+}
+
+// ===== MODELS =====
+
+model User {
+  id             String    @id @default(uuid())
+  username       String    @unique
+  email          String?   @unique
+  password_hash  String
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @default(now())
+  deleted_at     DateTime?
+
+  toolRequests   ToolRequest[]
+  devLogs        DevLog[]
+}
+
 model PortalSource {
-  id         Int           @id @default(autoincrement())
+  id         String        @id @default(uuid())
   name       String        @unique
   url        String?
   created_at DateTime      @default(now())
@@ -62,74 +112,74 @@ model PortalSource {
 }
 
 model SearchTerm {
-  id           Int           @id @default(autoincrement())
+  id           String           @id @default(uuid())
   keyword      String
   rank         Int
-  source_id    Int
-  collected_at DateTime      @default(now())
+  source_id    String
+  collected_at DateTime         @default(now())
   deleted_at   DateTime?
-  source       PortalSource  @relation(fields: [source_id], references: [id])
+  source       PortalSource     @relation(fields: [source_id], references: [id])
   keywordLinks SearchTermKeywordLink[]
 }
 
 model Keyword {
-  id          Int           @id @default(autoincrement())
+  id          String           @id @default(uuid())
   text        String
-  status      KeywordStatus @default(PENDING)
+  status      KeywordStatus    @default(PENDING)
   priority    Int?
-  prompt_id   Int?
-  created_at  DateTime      @default(now())
-  updated_at  DateTime      @default(now())
+  prompt_id   String?
+  created_at  DateTime          @default(now())
+  updated_at  DateTime          @default(now())
   deleted_at  DateTime?
-  prompt      Prompt?       @relation(fields: [prompt_id], references: [id])
+  prompt      Prompt?           @relation(fields: [prompt_id], references: [id])
   posts       BlogPost[]
   searchLinks SearchTermKeywordLink[]
   crawlLinks  CrawledDataKeywordLink[]
 }
 
 model SearchTermKeywordLink {
-  id             Int         @id @default(autoincrement())
-  search_term    SearchTerm  @relation(fields: [search_term_id], references: [id])
-  search_term_id Int
-  keyword        Keyword     @relation(fields: [keyword_id], references: [id])
-  keyword_id     Int
-  created_at     DateTime    @default(now())
+  id             String     @id @default(uuid())
+  search_term_id String
+  keyword_id     String
+  created_at     DateTime   @default(now())
+  search_term    SearchTerm @relation(fields: [search_term_id], references: [id])
+  keyword        Keyword    @relation(fields: [keyword_id], references: [id])
 }
 
 model CrawledData {
-  id           Int       @id @default(autoincrement())
+  id           String     @id @default(uuid())
   site         String
-  url          String    @unique
+  url          String     @unique
   type         DataType
   title        String?
   content      String?
-  collected_at DateTime  @default(now())
-  created_at   DateTime  @default(now())
+  collected_at DateTime   @default(now())
+  created_at   DateTime   @default(now())
   deleted_at   DateTime?
   keywordLinks CrawledDataKeywordLink[]
 }
 
 model CrawledDataKeywordLink {
-  id              Int         @id @default(autoincrement())
-  crawled_data    CrawledData @relation(fields: [crawled_data_id], references: [id])
-  crawled_data_id Int
-  keyword         Keyword     @relation(fields: [keyword_id], references: [id])
-  keyword_id      Int
+  id              String      @id @default(uuid())
+  crawled_data_id String
+  keyword_id      String
   created_at      DateTime    @default(now())
+  crawled_data    CrawledData @relation(fields: [crawled_data_id], references: [id])
+  keyword         Keyword     @relation(fields: [keyword_id], references: [id])
 }
 
 model Prompt {
-  id         Int          @id @default(autoincrement())
+  id         String    @id @default(uuid())
   type       PromptType
   content    String
-  created_at DateTime     @default(now())
-  updated_at DateTime     @default(now())
+  created_at DateTime   @default(now())
+  updated_at DateTime   @default(now())
   deleted_at DateTime?
   keywords   Keyword[]
 }
 
 model BlogChannel {
-  id             Int           @id @default(autoincrement())
+  id             String        @id @default(uuid())
   name           String        @unique
   platform       BlogPlatform
   base_url       String?
@@ -145,9 +195,9 @@ model BlogChannel {
 }
 
 model BlogPost {
-  id              Int           @id @default(autoincrement())
-  keyword_id      Int
-  blog_channel_id Int
+  id              String        @id @default(uuid())
+  keyword_id      String
+  blog_channel_id String
   title           String
   content         String?
   publish_status  PublishStatus @default(PENDING)
@@ -164,8 +214,8 @@ model BlogPost {
 }
 
 model PlatformLog {
-  id         Int       @id @default(autoincrement())
-  post_id    Int
+  id         String    @id @default(uuid())
+  post_id    String
   platform   String
   url        String?
   posted_at  DateTime
@@ -175,21 +225,21 @@ model PlatformLog {
 }
 
 model AiApiKey {
-  id           Int        @id @default(autoincrement())
-  name         String     @unique
+  id           String    @id @default(uuid())
+  name         String    @unique
   provider     AiProvider
   base_url     String?
   client_key   String
   secret_key   String
   model_name   String?
-  is_active    Boolean     @default(true)
-  created_at   DateTime    @default(now())
-  updated_at   DateTime    @default(now())
+  is_active    Boolean   @default(true)
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @default(now())
   deleted_at   DateTime?
 }
 
 model ThumbnailTemplate {
-  id           Int       @id @default(autoincrement())
+  id           String    @id @default(uuid())
   name         String    @unique
   description  String?
   html_content String
@@ -201,9 +251,9 @@ model ThumbnailTemplate {
 }
 
 model Thumbnail {
-  id            Int       @id @default(autoincrement())
-  blog_post_id  Int
-  template_id   Int
+  id            String    @id @default(uuid())
+  blog_post_id  String
+  template_id   String
   title_text    String?
   image_url     String?
   created_at    DateTime  @default(now())
@@ -213,7 +263,7 @@ model Thumbnail {
 }
 
 model ButtonTemplate {
-  id           Int       @id @default(autoincrement())
+  id           String    @id @default(uuid())
   name         String    @unique
   description  String?
   html_content String
@@ -225,9 +275,9 @@ model ButtonTemplate {
 }
 
 model Button {
-  id            Int       @id @default(autoincrement())
-  blog_post_id  Int
-  template_id   Int
+  id            String    @id @default(uuid())
+  blog_post_id  String
+  template_id   String
   text          String
   link_url      String
   position      String
@@ -235,4 +285,128 @@ model Button {
   deleted_at    DateTime?
   blog_post     BlogPost  @relation(fields: [blog_post_id], references: [id])
   template      ButtonTemplate @relation(fields: [template_id], references: [id])
+}
+
+model HotIssue {
+  id          String    @id @default(uuid())
+  title       String
+  content     String?
+  date        DateTime
+  thumbnail   String?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now())
+  deleted_at  DateTime?
+  tags        HotIssueTag[]
+}
+
+model Tag {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  hotIssueTags HotIssueTag[]
+}
+
+model HotIssueTag {
+  hot_issue_id String
+  tag_id       String
+  hot_issue    HotIssue @relation(fields: [hot_issue_id], references: [id])
+  tag          Tag      @relation(fields: [tag_id], references: [id])
+
+  @@id([hot_issue_id, tag_id])
+}
+
+model Tool {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  icon        String?
+  rating      Float?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now())
+  deleted_at  DateTime?
+}
+
+model ToolRequest {
+  id            String    @id @default(uuid())
+  name          String
+  description   String?
+  votes         Int       @default(0)
+  status        ToolRequestStatus @default(REQUESTED)
+  requested_by  String
+  requested_at  DateTime  @default(now())
+  completed_at  DateTime?
+  user          User      @relation(fields: [requested_by], references: [id])
+}
+
+model SideHustle {
+  id           String    @id @default(uuid())
+  title        String
+  category     String
+  income_range String?
+  description  String?
+  thumbnail    String?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @default(now())
+  deleted_at   DateTime?
+}
+
+model DevLog {
+  id          String    @id @default(uuid())
+  title       String
+  date        DateTime
+  summary     String?
+  content     String?
+  author_id   String
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now())
+  deleted_at  DateTime?
+  author      User      @relation(fields: [author_id], references: [id])
+}
+
+model MarketData {
+  id              String    @id @default(uuid())
+  market_type     MarketType
+  name            String
+  symbol          String?
+  price           Float
+  change          Float?
+  change_percent  Float?
+  updated_at      DateTime  @default(now())
+  globalIssues    GlobalIssueStock[]
+}
+
+model GlobalIssue {
+  id          String    @id @default(uuid())
+  title       String
+  summary     String?
+  date        DateTime
+  category    String?
+  impact      Impact
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now())
+  deleted_at  DateTime?
+  stocks      GlobalIssueStock[]
+}
+
+model GlobalIssueStock {
+  global_issue_id String
+  market_data_id  String
+  global_issue    GlobalIssue @relation(fields: [global_issue_id], references: [id])
+  market_data     MarketData  @relation(fields: [market_data_id], references: [id])
+
+  @@id([global_issue_id, market_data_id])
+}
+
+model MarketEvent {
+  id          String    @id @default(uuid())
+  title       String
+  date        DateTime
+  time        DateTime?
+  country     String?
+  importance  Importance
+  category    MarketEventCategory
+  description String?
+  impact      Impact
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now())
+  deleted_at  DateTime?
 }
