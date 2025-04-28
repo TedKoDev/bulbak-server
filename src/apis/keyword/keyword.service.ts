@@ -22,7 +22,7 @@ export class KeywordService {
         text: dto.text,
         status: dto.status || KeywordStatus.PENDING,
         priority: dto.priority || 0,
-        prompt_id: dto.prompt_id ?? null,
+        prompt_id: dto.prompt_id?.toString() ?? null,
       },
     });
 
@@ -30,7 +30,7 @@ export class KeywordService {
     if (dto.sourceSearchTermIds?.length) {
       await this.prisma.searchTermKeywordLink.createMany({
         data: dto.sourceSearchTermIds.map((id) => ({
-          search_term_id: id,
+          search_term_id: id.toString(),
           keyword_id: keyword.id,
         })),
       });
@@ -40,7 +40,7 @@ export class KeywordService {
     if (dto.sourceCrawledDataIds?.length) {
       await this.prisma.crawledDataKeywordLink.createMany({
         data: dto.sourceCrawledDataIds.map((id) => ({
-          crawled_data_id: id,
+          crawled_data_id: id.toString(),
           keyword_id: keyword.id,
         })),
       });
@@ -167,7 +167,7 @@ export class KeywordService {
   // src/apis/keyword/keyword.service.ts
   async updateStatus(id: number, status: KeywordStatus) {
     return this.prisma.keyword.update({
-      where: { id },
+      where: { id: id.toString() },
       data: { status },
     });
   }
