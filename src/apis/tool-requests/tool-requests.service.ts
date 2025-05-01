@@ -19,7 +19,7 @@ export class ToolRequestsService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: number) {
     const toolRequest = await this.prisma.toolRequest.findUnique({
       where: { id },
       include: {
@@ -56,7 +56,7 @@ export class ToolRequestsService {
     });
   }
 
-  async update(id: string, data: any) {
+  async update(id: number, data: any) {
     // Check if tool request exists
     await this.findOne(id);
 
@@ -79,7 +79,7 @@ export class ToolRequestsService {
     });
   }
 
-  async vote(id: string) {
+  async vote(id: number) {
     // Check if tool request exists
     await this.findOne(id);
 

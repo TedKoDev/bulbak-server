@@ -22,7 +22,7 @@ export class DevLogsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: number) {
     return this.devLogsService.findOne(id);
   }
 
@@ -34,13 +34,13 @@ export class DevLogsController {
 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateDevLogDto: any, @Req() req) {
+  update(@Param('id') id: number, @Body() updateDevLogDto: any, @Req() req) {
     return this.devLogsService.update(id, updateDevLogDto, req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string, @Req() req) {
+  remove(@Param('id') id: number, @Req() req) {
     return this.devLogsService.remove(id, req.user.id);
   }
 }

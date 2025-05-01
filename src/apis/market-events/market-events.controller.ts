@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { MarketEventsService } from './market-events.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -21,7 +22,7 @@ export class MarketEventsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.marketEventsService.findOne(id);
   }
 
@@ -33,13 +34,16 @@ export class MarketEventsController {
 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateMarketEventDto: any) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateMarketEventDto: any,
+  ) {
     return this.marketEventsService.update(id, updateMarketEventDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.marketEventsService.remove(id);
   }
 }

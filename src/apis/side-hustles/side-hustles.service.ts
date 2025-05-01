@@ -12,7 +12,7 @@ export class SideHustlesService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: number) {
     const sideHustle = await this.prisma.sideHustle.findUnique({
       where: { id, deleted_at: null },
     });
@@ -30,7 +30,7 @@ export class SideHustlesService {
     });
   }
 
-  async update(id: string, data: any) {
+  async update(id: number, data: any) {
     // Check if side hustle exists
     await this.findOne(id);
 
@@ -40,7 +40,7 @@ export class SideHustlesService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: number) {
     // Check if side hustle exists
     await this.findOne(id);
 

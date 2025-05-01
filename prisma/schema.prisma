@@ -89,7 +89,7 @@ enum MarketEventCategory {
 // ===== MODELS =====
 
 model User {
-  id             String    @id @default(uuid())
+  id             Int       @id @default(autoincrement())
   username       String    @unique
   email          String?   @unique
   password_hash  String
@@ -102,32 +102,32 @@ model User {
 }
 
 model PortalSource {
-  id         String        @id @default(uuid())
-  name       String        @unique
+  id         Int        @id @default(autoincrement())
+  name       String     @unique
   url        String?
-  created_at DateTime      @default(now())
-  updated_at DateTime      @default(now())
+  created_at DateTime   @default(now())
+  updated_at DateTime   @default(now())
   deleted_at DateTime?
   keywords   SearchTerm[]
 }
 
 model SearchTerm {
-  id           String           @id @default(uuid())
+  id           Int               @id @default(autoincrement())
   keyword      String
   rank         Int
-  source_id    String
-  collected_at DateTime         @default(now())
+  source_id    Int
+  collected_at DateTime          @default(now())
   deleted_at   DateTime?
-  source       PortalSource     @relation(fields: [source_id], references: [id])
+  source       PortalSource      @relation(fields: [source_id], references: [id])
   keywordLinks SearchTermKeywordLink[]
 }
 
 model Keyword {
-  id          String           @id @default(uuid())
+  id          Int               @id @default(autoincrement())
   text        String
-  status      KeywordStatus    @default(PENDING)
+  status      KeywordStatus     @default(PENDING)
   priority    Int?
-  prompt_id   String?
+  prompt_id   Int?
   created_at  DateTime          @default(now())
   updated_at  DateTime          @default(now())
   deleted_at  DateTime?
@@ -138,16 +138,16 @@ model Keyword {
 }
 
 model SearchTermKeywordLink {
-  id             String     @id @default(uuid())
-  search_term_id String
-  keyword_id     String
+  id             Int        @id @default(autoincrement())
+  search_term_id Int
+  keyword_id     Int
   created_at     DateTime   @default(now())
   search_term    SearchTerm @relation(fields: [search_term_id], references: [id])
   keyword        Keyword    @relation(fields: [keyword_id], references: [id])
 }
 
 model CrawledData {
-  id           String     @id @default(uuid())
+  id           Int        @id @default(autoincrement())
   site         String
   url          String     @unique
   type         DataType
@@ -160,16 +160,16 @@ model CrawledData {
 }
 
 model CrawledDataKeywordLink {
-  id              String      @id @default(uuid())
-  crawled_data_id String
-  keyword_id      String
+  id              Int         @id @default(autoincrement())
+  crawled_data_id Int
+  keyword_id      Int
   created_at      DateTime    @default(now())
   crawled_data    CrawledData @relation(fields: [crawled_data_id], references: [id])
   keyword         Keyword     @relation(fields: [keyword_id], references: [id])
 }
 
 model Prompt {
-  id         String    @id @default(uuid())
+  id         Int       @id @default(autoincrement())
   type       PromptType
   content    String
   created_at DateTime   @default(now())
@@ -179,7 +179,7 @@ model Prompt {
 }
 
 model BlogChannel {
-  id             String        @id @default(uuid())
+  id             Int           @id @default(autoincrement())
   name           String        @unique
   platform       BlogPlatform
   base_url       String?
@@ -195,9 +195,9 @@ model BlogChannel {
 }
 
 model BlogPost {
-  id              String        @id @default(uuid())
-  keyword_id      String
-  blog_channel_id String
+  id              Int         @id @default(autoincrement())
+  keyword_id      Int
+  blog_channel_id Int
   title           String
   content         String?
   publish_status  PublishStatus @default(PENDING)
@@ -214,8 +214,8 @@ model BlogPost {
 }
 
 model PlatformLog {
-  id         String    @id @default(uuid())
-  post_id    String
+  id         Int       @id @default(autoincrement())
+  post_id    Int
   platform   String
   url        String?
   posted_at  DateTime
@@ -225,7 +225,7 @@ model PlatformLog {
 }
 
 model AiApiKey {
-  id           String    @id @default(uuid())
+  id           Int       @id @default(autoincrement())
   name         String    @unique
   provider     AiProvider
   base_url     String?
@@ -239,7 +239,7 @@ model AiApiKey {
 }
 
 model ThumbnailTemplate {
-  id           String    @id @default(uuid())
+  id           Int       @id @default(autoincrement())
   name         String    @unique
   description  String?
   html_content String
@@ -251,9 +251,9 @@ model ThumbnailTemplate {
 }
 
 model Thumbnail {
-  id            String    @id @default(uuid())
-  blog_post_id  String
-  template_id   String
+  id            Int       @id @default(autoincrement())
+  blog_post_id  Int
+  template_id   Int
   title_text    String?
   image_url     String?
   created_at    DateTime  @default(now())
@@ -263,7 +263,7 @@ model Thumbnail {
 }
 
 model ButtonTemplate {
-  id           String    @id @default(uuid())
+  id           Int       @id @default(autoincrement())
   name         String    @unique
   description  String?
   html_content String
@@ -275,9 +275,9 @@ model ButtonTemplate {
 }
 
 model Button {
-  id            String    @id @default(uuid())
-  blog_post_id  String
-  template_id   String
+  id            Int       @id @default(autoincrement())
+  blog_post_id  Int
+  template_id   Int
   text          String
   link_url      String
   position      String
@@ -288,7 +288,7 @@ model Button {
 }
 
 model HotIssue {
-  id          String    @id @default(uuid())
+  id          Int       @id @default(autoincrement())
   title       String
   content     String?
   date        DateTime
@@ -300,14 +300,14 @@ model HotIssue {
 }
 
 model Tag {
-  id          String    @id @default(uuid())
+  id          Int       @id @default(autoincrement())
   name        String    @unique
   hotIssueTags HotIssueTag[]
 }
 
 model HotIssueTag {
-  hot_issue_id String
-  tag_id       String
+  hot_issue_id Int
+  tag_id       Int
   hot_issue    HotIssue @relation(fields: [hot_issue_id], references: [id])
   tag          Tag      @relation(fields: [tag_id], references: [id])
 
@@ -315,7 +315,7 @@ model HotIssueTag {
 }
 
 model Tool {
-  id          String    @id @default(uuid())
+  id          Int       @id @default(autoincrement())
   name        String
   description String?
   icon        String?
@@ -326,19 +326,19 @@ model Tool {
 }
 
 model ToolRequest {
-  id            String    @id @default(uuid())
+  id            Int       @id @default(autoincrement())
   name          String
   description   String?
   votes         Int       @default(0)
   status        ToolRequestStatus @default(REQUESTED)
-  requested_by  String
+  requested_by  Int
   requested_at  DateTime  @default(now())
   completed_at  DateTime?
   user          User      @relation(fields: [requested_by], references: [id])
 }
 
 model SideHustle {
-  id           String    @id @default(uuid())
+  id           Int       @id @default(autoincrement())
   title        String
   category     String
   income_range String?
@@ -350,12 +350,12 @@ model SideHustle {
 }
 
 model DevLog {
-  id          String    @id @default(uuid())
+  id          Int       @id @default(autoincrement())
   title       String
   date        DateTime
   summary     String?
   content     String?
-  author_id   String
+  author_id   Int
   created_at  DateTime  @default(now())
   updated_at  DateTime  @default(now())
   deleted_at  DateTime?
@@ -363,7 +363,7 @@ model DevLog {
 }
 
 model MarketData {
-  id              String    @id @default(uuid())
+  id              Int       @id @default(autoincrement())
   market_type     MarketType
   name            String
   symbol          String?
@@ -375,7 +375,7 @@ model MarketData {
 }
 
 model GlobalIssue {
-  id          String    @id @default(uuid())
+  id          Int       @id @default(autoincrement())
   title       String
   summary     String?
   date        DateTime
@@ -388,8 +388,8 @@ model GlobalIssue {
 }
 
 model GlobalIssueStock {
-  global_issue_id String
-  market_data_id  String
+  global_issue_id Int
+  market_data_id  Int
   global_issue    GlobalIssue @relation(fields: [global_issue_id], references: [id])
   market_data     MarketData  @relation(fields: [market_data_id], references: [id])
 
@@ -397,7 +397,7 @@ model GlobalIssueStock {
 }
 
 model MarketEvent {
-  id          String    @id @default(uuid())
+  id          Int       @id @default(autoincrement())
   title       String
   date        DateTime
   time        DateTime?

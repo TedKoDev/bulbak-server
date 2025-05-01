@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { GlobalIssuesService } from './global-issues.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -21,7 +22,7 @@ export class GlobalIssuesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.globalIssuesService.findOne(id);
   }
 
@@ -33,13 +34,16 @@ export class GlobalIssuesController {
 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateGlobalIssueDto: any) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateGlobalIssueDto: any,
+  ) {
     return this.globalIssuesService.update(id, updateGlobalIssueDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.globalIssuesService.remove(id);
   }
 }

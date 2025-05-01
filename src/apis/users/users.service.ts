@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import * as bcrypt from 'bcrypt';
 
@@ -16,7 +12,7 @@ export class UsersService {
     });
   }
 
-  async findById(id: string) {
+  async findById(id: number) {
     return this.prisma.user.findUnique({
       where: { id },
     });

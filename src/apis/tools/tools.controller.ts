@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ToolsService } from './tools.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -21,7 +22,7 @@ export class ToolsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.toolsService.findOne(id);
   }
 
@@ -33,13 +34,13 @@ export class ToolsController {
 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateToolDto: any) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateToolDto: any) {
     return this.toolsService.update(id, updateToolDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.toolsService.remove(id);
   }
 }

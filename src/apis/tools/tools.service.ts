@@ -12,7 +12,7 @@ export class ToolsService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: number) {
     const tool = await this.prisma.tool.findUnique({
       where: { id, deleted_at: null },
     });
@@ -30,7 +30,7 @@ export class ToolsService {
     });
   }
 
-  async update(id: string, data: any) {
+  async update(id: number, data: any) {
     // Check if tool exists
     await this.findOne(id);
 
@@ -40,7 +40,7 @@ export class ToolsService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: number) {
     // Check if tool exists
     await this.findOne(id);
 

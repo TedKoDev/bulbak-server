@@ -19,8 +19,8 @@ export class HotIssuesService {
     });
   }
 
-  async findOne(id: string) {
-    const hotIssue = await this.prisma.hotIssue.findUnique({
+  async findOne(id: number) {
+    const hotIssue = await this.prisma.hotIssue.findFirst({
       where: { id, deleted_at: null },
       include: {
         tags: {
@@ -48,7 +48,6 @@ export class HotIssuesService {
 
       if (tags && tags.length > 0) {
         for (const tagName of tags) {
-          // Find or create tag
           let tag = await tx.tag.findUnique({
             where: { name: tagName },
           });
@@ -59,7 +58,6 @@ export class HotIssuesService {
             });
           }
 
-          // Create link between hotIssue and tag
           await tx.hotIssueTag.create({
             data: {
               hot_issue_id: hotIssue.id,
@@ -73,28 +71,23 @@ export class HotIssuesService {
     });
   }
 
-  async update(id: string, data: any) {
+  async update(id: number, data: any) {
     const { tags, ...hotIssueData } = data;
 
-    // Check if hot issue exists
     await this.findOne(id);
 
     return this.prisma.$transaction(async (tx) => {
-      // Update hot issue
       await tx.hotIssue.update({
         where: { id },
         data: hotIssueData,
       });
 
       if (tags) {
-        // Delete existing tags
         await tx.hotIssueTag.deleteMany({
           where: { hot_issue_id: id },
         });
 
-        // Add new tags
         for (const tagName of tags) {
-          // Find or create tag
           let tag = await tx.tag.findUnique({
             where: { name: tagName },
           });
@@ -105,7 +98,6 @@ export class HotIssuesService {
             });
           }
 
-          // Create link between hotIssue and tag
           await tx.hotIssueTag.create({
             data: {
               hot_issue_id: id,
@@ -119,11 +111,9 @@ export class HotIssuesService {
     });
   }
 
-  async remove(id: string) {
-    // Check if hot issue exists
+  async remove(id: number) {
     await this.findOne(id);
 
-    // Soft delete
     return this.prisma.hotIssue.update({
       where: { id },
       data: { deleted_at: new Date() },

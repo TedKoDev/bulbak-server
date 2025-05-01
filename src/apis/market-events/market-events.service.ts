@@ -12,7 +12,7 @@ export class MarketEventsService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: number) {
     const marketEvent = await this.prisma.marketEvent.findUnique({
       where: { id, deleted_at: null },
     });
@@ -30,7 +30,7 @@ export class MarketEventsService {
     });
   }
 
-  async update(id: string, data: any) {
+  async update(id: number, data: any) {
     // Check if market event exists
     await this.findOne(id);
 
@@ -40,7 +40,7 @@ export class MarketEventsService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: number) {
     // Check if market event exists
     await this.findOne(id);
 

@@ -19,8 +19,8 @@ export class GlobalIssuesService {
     });
   }
 
-  async findOne(id: string) {
-    const globalIssue = await this.prisma.globalIssue.findUnique({
+  async findOne(id: number) {
+    const globalIssue = await this.prisma.globalIssue.findFirst({
       where: { id, deleted_at: null },
       include: {
         stocks: {
@@ -61,26 +61,22 @@ export class GlobalIssuesService {
     });
   }
 
-  async update(id: string, data: any) {
+  async update(id: number, data: any) {
     const { stocks, ...globalIssueData } = data;
 
-    // Check if global issue exists
     await this.findOne(id);
 
     return this.prisma.$transaction(async (tx) => {
-      // Update global issue
       await tx.globalIssue.update({
         where: { id },
         data: globalIssueData,
       });
 
       if (stocks) {
-        // Delete existing stock links
         await tx.globalIssueStock.deleteMany({
           where: { global_issue_id: id },
         });
 
-        // Add new stock links
         for (const stockId of stocks) {
           await tx.globalIssueStock.create({
             data: {
@@ -95,11 +91,9 @@ export class GlobalIssuesService {
     });
   }
 
-  async remove(id: string) {
-    // Check if global issue exists
+  async remove(id: number) {
     await this.findOne(id);
 
-    // Soft delete
     return this.prisma.globalIssue.update({
       where: { id },
       data: { deleted_at: new Date() },

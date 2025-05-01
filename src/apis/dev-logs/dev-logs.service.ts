@@ -24,8 +24,8 @@ export class DevLogsService {
     });
   }
 
-  async findOne(id: string) {
-    const devLog = await this.prisma.devLog.findUnique({
+  async findOne(id: number) {
+    const devLog = await this.prisma.devLog.findFirst({
       where: { id, deleted_at: null },
       include: {
         author: {
@@ -61,11 +61,9 @@ export class DevLogsService {
     });
   }
 
-  async update(id: string, data: any, userId: string) {
-    // Check if dev log exists
+  async update(id: number, data: any, userId: string) {
     const devLog = await this.findOne(id);
 
-    // Check if user is the author
     if (devLog.author_id !== userId) {
       throw new ForbiddenException('You can only update your own dev logs');
     }
@@ -84,16 +82,13 @@ export class DevLogsService {
     });
   }
 
-  async remove(id: string, userId: string) {
-    // Check if dev log exists
+  async remove(id: number, userId: string) {
     const devLog = await this.findOne(id);
 
-    // Check if user is the author
     if (devLog.author_id !== userId) {
       throw new ForbiddenException('You can only delete your own dev logs');
     }
 
-    // Soft delete
     return this.prisma.devLog.update({
       where: { id },
       data: { deleted_at: new Date() },

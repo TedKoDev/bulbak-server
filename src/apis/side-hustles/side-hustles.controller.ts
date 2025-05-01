@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { SideHustlesService } from './side-hustles.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -21,7 +22,7 @@ export class SideHustlesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.sideHustlesService.findOne(id);
   }
 
@@ -33,13 +34,16 @@ export class SideHustlesController {
 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateSideHustleDto: any) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateSideHustleDto: any,
+  ) {
     return this.sideHustlesService.update(id, updateSideHustleDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.sideHustlesService.remove(id);
   }
 }

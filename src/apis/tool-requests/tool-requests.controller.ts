@@ -7,6 +7,7 @@ import {
   Put,
   Req,
   UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ToolRequestsService } from './tool-requests.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -21,7 +22,7 @@ export class ToolRequestsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.toolRequestsService.findOne(id);
   }
 
@@ -33,13 +34,16 @@ export class ToolRequestsController {
 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateToolRequestDto: any) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateToolRequestDto: any,
+  ) {
     return this.toolRequestsService.update(id, updateToolRequestDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post(':id/vote')
-  vote(@Param('id') id: string) {
+  vote(@Param('id', ParseIntPipe) id: number) {
     return this.toolRequestsService.vote(id);
   }
 }
