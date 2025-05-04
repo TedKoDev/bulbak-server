@@ -86,7 +86,54 @@ enum MarketEventCategory {
   POLICY
 }
 
+enum TargetType {
+  BLOG_POST
+  HOT_ISSUE
+  TOOL
+  SIDE_HUSTLE
+  DEV_LOG
+}
+
+model Like {
+  id          Int         @id @default(autoincrement())
+  user_id     Int
+  target_type TargetType
+  target_id   Int
+  created_at  DateTime    @default(now())
+  user        User        @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, target_type, target_id]) // 한 유저가 하나의 타겟에 중복 좋아요 방지
+}
+
+model Dislike {
+  id          Int         @id @default(autoincrement())
+  user_id     Int
+  target_type TargetType
+  target_id   Int
+  created_at  DateTime    @default(now())
+
+  user        User        @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, target_type, target_id])
+}
+
+model Comment {
+  id          Int         @id @default(autoincrement())
+  user_id     Int
+  target_type TargetType
+  target_id   Int
+  content     String
+  created_at  DateTime    @default(now())
+  deleted_at  DateTime?
+
+  user        User        @relation(fields: [user_id], references: [id])
+}
+
+
+
+
 // ===== MODELS =====
+
 
 model User {
   id             Int       @id @default(autoincrement())
@@ -99,6 +146,10 @@ model User {
 
   toolRequests   ToolRequest[]
   devLogs        DevLog[]
+
+  Like Like[]
+  Dislike Dislike[]
+  Comments Comment[]
 }
 
 model PortalSource {
@@ -355,6 +406,7 @@ model DevLog {
   date        DateTime
   summary     String?
   content     String?
+  category    String?
   author_id   Int
   created_at  DateTime  @default(now())
   updated_at  DateTime  @default(now())

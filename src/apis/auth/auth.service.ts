@@ -21,8 +21,14 @@ export class AuthService {
 
   async login(user: any) {
     const payload = { username: user.username, sub: user.id };
+    console.log(payload);
+
+    const token = this.jwtService.sign(payload);
+    console.log(token);
+    console.log(user);
+
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: token,
       user: {
         id: user.id,
         username: user.username,
@@ -33,6 +39,7 @@ export class AuthService {
 
   async register(data: { username: string; email?: string; password: string }) {
     try {
+      console.log(data);
       const user = await this.usersService.create(data);
       const { password_hash, ...result } = user;
       return result;

@@ -8,9 +8,11 @@ import {
   Put,
   Req,
   UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { DevLogsService } from './dev-logs.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CreateDevLogDto, UpdateDevLogDto } from './dto/devlog-dto';
 
 @Controller('api/dev-logs')
 export class DevLogsController {
@@ -18,29 +20,42 @@ export class DevLogsController {
 
   @Get()
   findAll() {
+    console.log('findAll');
     return this.devLogsService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: number) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.devLogsService.findOne(id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() createDevLogDto: any, @Req() req) {
+  create(@Body() createDevLogDto: CreateDevLogDto, @Req() req) {
+    console.log('create');
+    console.log(req.user);
+    console.log(createDevLogDto);
+    console.log(createDevLogDto.title);
+    console.log(createDevLogDto.date);
+    console.log(createDevLogDto.summary);
+    console.log(createDevLogDto.content);
+    console.log(createDevLogDto.category);
     return this.devLogsService.create(createDevLogDto, req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
-  update(@Param('id') id: number, @Body() updateDevLogDto: any, @Req() req) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateDevLogDto: UpdateDevLogDto,
+    @Req() req,
+  ) {
     return this.devLogsService.update(id, updateDevLogDto, req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: number, @Req() req) {
+  remove(@Param('id', ParseIntPipe) id: number, @Req() req) {
     return this.devLogsService.remove(id, req.user.id);
   }
 }

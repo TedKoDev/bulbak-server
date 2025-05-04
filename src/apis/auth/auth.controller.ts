@@ -19,6 +19,7 @@ export class AuthController {
   async register(
     @Body() registerDto: { username: string; email?: string; password: string },
   ) {
+    console.log(registerDto);
     return this.authService.register(registerDto);
   }
 
@@ -48,6 +49,7 @@ export class AuthController {
     return {
       status: 'success',
       user: result.user,
+      token: result.access_token,
     };
   }
 

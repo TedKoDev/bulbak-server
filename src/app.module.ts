@@ -14,6 +14,7 @@ import { DevLogsModule } from './apis/dev-logs/dev-logs.module';
 import { MarketDataModule } from './apis/market-data/market-data.module';
 import { GlobalIssuesModule } from './apis/global-issues/global-issues.module';
 import { MarketEventsModule } from './apis/market-events/market-events.module';
+import { CommentsModule } from './apis/comments/comments.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { MarketEventsModule } from './apis/market-events/market-events.module';
     MarketDataModule,
     GlobalIssuesModule,
     MarketEventsModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

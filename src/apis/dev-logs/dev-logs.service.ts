@@ -4,13 +4,18 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
+import { InteractionsService } from '../interactions/interactions.service';
+import { TargetType } from '@prisma/client';
 
 @Injectable()
 export class DevLogsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private interactionsService: InteractionsService,
+  ) {}
 
   async findAll() {
-    return this.prisma.devLog.findMany({
+    const devLogs = await this.prisma.devLog.findMany({
       where: { deleted_at: null },
       include: {
         author: {
@@ -22,6 +27,21 @@ export class DevLogsService {
       },
       orderBy: { date: 'desc' },
     });
+
+    const interactionCounts =
+      await this.interactionsService.getInteractionCountsForMany(
+        TargetType.DEV_LOG,
+        devLogs.map((log) => log.id),
+      );
+
+    return devLogs.map((log) => ({
+      ...log,
+      interactions: interactionCounts.get(log.id) || {
+        likes: 0,
+        dislikes: 0,
+        comments: 0,
+      },
+    }));
   }
 
   async findOne(id: number) {
@@ -41,7 +61,15 @@ export class DevLogsService {
       throw new NotFoundException(`Dev log with ID ${id} not found`);
     }
 
-    return devLog;
+    const interactions = await this.interactionsService.getInteractionCounts(
+      TargetType.DEV_LOG,
+      id,
+    );
+
+    return {
+      ...devLog,
+      interactions,
+    };
   }
 
   async create(data: any, authorId: string) {
