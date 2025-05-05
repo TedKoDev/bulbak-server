@@ -122,13 +122,15 @@ export class InteractionsService {
     }
 
     // 좋아요 추가
-    return this.prisma.like.create({
+    const new_like = await this.prisma.like.create({
       data: {
         user_id: user_id,
         target_type: create_interaction_dto.target_type,
         target_id: create_interaction_dto.target_id,
       },
     });
+
+    return new_like;
   }
 
   async remove_like(
@@ -178,13 +180,15 @@ export class InteractionsService {
     }
 
     // 싫어요 추가
-    return this.prisma.dislike.create({
+    const new_dislike = await this.prisma.dislike.create({
       data: {
         user_id: user_id,
         target_type: create_interaction_dto.target_type,
         target_id: create_interaction_dto.target_id,
       },
     });
+
+    return new_dislike;
   }
 
   async remove_dislike(
@@ -206,26 +210,43 @@ export class InteractionsService {
     target_id: number,
     user_id: number,
   ) {
-    const [like, dislike] = await Promise.all([
-      this.prisma.like.findFirst({
-        where: {
-          user_id: user_id,
-          target_type: target_type,
-          target_id: target_id,
-        },
-      }),
-      this.prisma.dislike.findFirst({
-        where: {
-          user_id: user_id,
-          target_type: target_type,
-          target_id: target_id,
-        },
-      }),
-    ]);
+    console.log('=== get_user_interactions called ===');
+    console.log('Parameters:', { target_type, target_id, user_id });
 
-    return {
-      has_liked: !!like,
+    // 먼저 좋아요를 확인
+    const like = await this.prisma.like.findFirst({
+      where: {
+        user_id: user_id,
+        target_type: target_type,
+        target_id: target_id,
+      },
+    });
+    console.log('Found like:', like);
+
+    // 좋아요가 있으면 싫어요는 확인하지 않고 바로 반환
+    if (like) {
+      console.log('Returning has_liked: true');
+      return {
+        has_liked: true,
+        has_disliked: false,
+      };
+    }
+
+    // 좋아요가 없을 때만 싫어요 확인
+    const dislike = await this.prisma.dislike.findFirst({
+      where: {
+        user_id: user_id,
+        target_type: target_type,
+        target_id: target_id,
+      },
+    });
+    console.log('Found dislike:', dislike);
+
+    const result = {
+      has_liked: false,
       has_disliked: !!dislike,
     };
+    console.log('Returning result:', result);
+    return result;
   }
 }

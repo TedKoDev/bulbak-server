@@ -35,19 +35,28 @@ export class InteractionsController {
   }
 
   @Get('user')
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async get_user_interactions(
     @Query('target_type') target_type: TargetType,
     @Query('target_id') target_id: number,
     @Request() req,
   ) {
-    console.log('=== get_user_interactions called ===');
+    console.log('=== get_user_interactions controller called ===');
     console.log('Query params:', { target_type, target_id });
-    console.log('User:', req.user);
+    console.log('Request user:', req.user);
+
+    if (!req.user?.id) {
+      console.log('No user ID found in request');
+      return {
+        has_liked: false,
+        has_disliked: false,
+      };
+    }
+
     return this.interactions_service.get_user_interactions(
       target_type,
       target_id,
-      req.user?.id,
+      req.user.id,
     );
   }
 
