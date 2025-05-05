@@ -16,6 +16,9 @@ import { GlobalIssuesModule } from './apis/global-issues/global-issues.module';
 import { MarketEventsModule } from './apis/market-events/market-events.module';
 import { CommentsModule } from './apis/comments/comments.module';
 import { InteractionsModule } from './apis/interactions/interactions.module';
+import { BlogPostsModule } from './apis/blog-posts/blog-posts.module';
+import { ViewsModule } from './apis/views/views.module';
+
 @Module({
   imports: [
     SearchTermModule,
@@ -33,6 +36,8 @@ import { InteractionsModule } from './apis/interactions/interactions.module';
     MarketEventsModule,
     CommentsModule,
     InteractionsModule,
+    BlogPostsModule,
+    ViewsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

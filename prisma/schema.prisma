@@ -95,6 +95,20 @@ enum TargetType {
   COMMENT
 }
 
+model View {
+  id          Int         @id @default(autoincrement())
+  target_type TargetType
+  target_id   Int
+  user_id     Int?
+  ip_address  String?
+  viewed_at   DateTime    @default(now())
+
+  user        User?       @relation(fields: [user_id], references: [id])
+
+  @@index([target_type, target_id])
+}
+
+
 model Like {
   id          Int         @id @default(autoincrement())
   user_id     Int
@@ -151,6 +165,7 @@ model User {
   Like Like[]
   Dislike Dislike[]
   Comments Comment[]
+  Views View[]
 }
 
 model PortalSource {

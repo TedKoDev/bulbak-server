@@ -34,6 +34,23 @@ export class DevLogsService {
         devLogs.map((log) => log.id),
       );
 
+    const viewCounts = await this.prisma.view.groupBy({
+      by: ['target_id'],
+      where: {
+        target_type: TargetType.DEV_LOG,
+        target_id: {
+          in: devLogs.map((log) => log.id),
+        },
+      },
+      _count: {
+        _all: true,
+      },
+    });
+
+    const viewCountMap = new Map(
+      viewCounts.map((count) => [count.target_id, count._count._all]),
+    );
+
     return devLogs.map((log) => ({
       ...log,
       interactions: interactionCounts.get(log.id) || {
@@ -41,6 +58,7 @@ export class DevLogsService {
         dislikes: 0,
         comments: 0,
       },
+      views: viewCountMap.get(log.id) || 0,
     }));
   }
 
@@ -66,9 +84,17 @@ export class DevLogsService {
       id,
     );
 
+    const viewCount = await this.prisma.view.count({
+      where: {
+        target_type: TargetType.DEV_LOG,
+        target_id: id,
+      },
+    });
+
     return {
       ...devLog,
       interactions,
+      views: viewCount,
     };
   }
 
