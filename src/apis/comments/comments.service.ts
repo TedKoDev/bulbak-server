@@ -37,6 +37,8 @@ export class CommentsService {
   }
 
   async findOne(id: number): Promise<CommentResponseDto> {
+    console.log('===get CommentService findOne called ===');
+    console.log('Param:', { id });
     const comment = await this.prisma.comment.findFirst({
       where: {
         id,

@@ -25,14 +25,18 @@ export class CommentsController {
 
   @Get()
   async findAll(
-    @Query('targetType') targetType: TargetType,
-    @Query('targetId') targetId: number,
+    @Query('target_type') target_type: TargetType,
+    @Query('target_id') target_id: number,
   ): Promise<CommentResponseDto[]> {
-    return this.commentsService.findAll(targetType, targetId);
+    console.log('=== get CommentsController findAll called ===');
+    console.log('Query params:', { target_type, target_id });
+    return this.commentsService.findAll(target_type, target_id);
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<CommentResponseDto> {
+    console.log('=== get CommentsController findOne called ===');
+    console.log('Param:', { id });
     return this.commentsService.findOne(+id);
   }
 
@@ -42,6 +46,9 @@ export class CommentsController {
     @Body() createCommentDto: CreateCommentDto,
     @Request() req,
   ): Promise<CommentResponseDto> {
+    console.log('=== get CommentsController create called ===');
+    console.log('Body:', createCommentDto);
+    console.log('User:', req.user);
     return this.commentsService.create(createCommentDto, req.user.id);
   }
 
@@ -52,12 +59,19 @@ export class CommentsController {
     @Body() updateCommentDto: UpdateCommentDto,
     @Request() req,
   ): Promise<CommentResponseDto> {
+    console.log('=== get CommentsController update called ===');
+    console.log('Param:', { id });
+    console.log('Body:', updateCommentDto);
+    console.log('User:', req.user);
     return this.commentsService.update(+id, updateCommentDto, req.user.id);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   async remove(@Param('id') id: string, @Request() req): Promise<void> {
+    console.log('=== get CommentsController remove called ===');
+    console.log('Param:', { id });
+    console.log('User:', req.user);
     return this.commentsService.remove(+id, req.user.id);
   }
 }

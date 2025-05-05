@@ -19,7 +19,7 @@ async function bootstrap() {
       whitelist: true,
     }),
   );
-
+  app.setGlobalPrefix('api');
   // Enable cookie parsing
   app.use(cookieParser());
 

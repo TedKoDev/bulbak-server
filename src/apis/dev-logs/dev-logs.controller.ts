@@ -14,7 +14,7 @@ import { DevLogsService } from './dev-logs.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateDevLogDto, UpdateDevLogDto } from './dto/devlog-dto';
 
-@Controller('api/dev-logs')
+@Controller('dev-logs')
 export class DevLogsController {
   constructor(private readonly devLogsService: DevLogsService) {}
 

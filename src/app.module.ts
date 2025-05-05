@@ -15,7 +15,7 @@ import { MarketDataModule } from './apis/market-data/market-data.module';
 import { GlobalIssuesModule } from './apis/global-issues/global-issues.module';
 import { MarketEventsModule } from './apis/market-events/market-events.module';
 import { CommentsModule } from './apis/comments/comments.module';
-
+import { InteractionsModule } from './apis/interactions/interactions.module';
 @Module({
   imports: [
     SearchTermModule,
@@ -32,6 +32,7 @@ import { CommentsModule } from './apis/comments/comments.module';
     GlobalIssuesModule,
     MarketEventsModule,
     CommentsModule,
+    InteractionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

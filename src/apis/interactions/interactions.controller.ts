@@ -19,75 +19,98 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('interactions')
 export class InteractionsController {
-  constructor(private readonly interactionsService: InteractionsService) {}
+  constructor(private readonly interactions_service: InteractionsService) {}
 
   @Get('counts')
-  async getCounts(
-    @Query('targetType') targetType: TargetType,
-    @Query('targetId') targetId: number,
+  async get_counts(
+    @Query('target_type') target_type: TargetType,
+    @Query('target_id') target_id: number,
   ): Promise<InteractionCountsDto> {
-    return this.interactionsService.getInteractionCounts(targetType, targetId);
+    console.log('=== get_counts called ===');
+    console.log('Query params:', { target_type, target_id });
+    return this.interactions_service.get_interaction_counts(
+      target_type,
+      target_id,
+    );
   }
 
   @Get('user')
-  @UseGuards(JwtAuthGuard)
-  async getUserInteractions(
-    @Query('targetType') targetType: TargetType,
-    @Query('targetId') targetId: number,
+  // @UseGuards(JwtAuthGuard)
+  async get_user_interactions(
+    @Query('target_type') target_type: TargetType,
+    @Query('target_id') target_id: number,
     @Request() req,
   ) {
-    return this.interactionsService.getUserInteractions(
-      targetType,
-      targetId,
-      req.user.id,
+    console.log('=== get_user_interactions called ===');
+    console.log('Query params:', { target_type, target_id });
+    console.log('User:', req.user);
+    return this.interactions_service.get_user_interactions(
+      target_type,
+      target_id,
+      req.user?.id,
     );
   }
 
   @Post('like')
   @UseGuards(JwtAuthGuard)
-  async addLike(
-    @Body() createInteractionDto: CreateInteractionDto,
+  async add_like(
+    @Body() create_interaction_dto: CreateInteractionDto,
     @Request() req,
   ): Promise<InteractionResponseDto> {
-    return this.interactionsService.addLike(createInteractionDto, req.user.id);
+    console.log('=== add_like called ===');
+    console.log('Body:', create_interaction_dto);
+    console.log('User:', req.user);
+    return this.interactions_service.add_like(
+      create_interaction_dto,
+      req.user.id,
+    );
   }
 
   @Delete('like')
   @UseGuards(JwtAuthGuard)
-  async removeLike(
-    @Query('targetType') targetType: TargetType,
-    @Query('targetId') targetId: number,
+  async remove_like(
+    @Query('target_type') target_type: TargetType,
+    @Query('target_id') target_id: number,
     @Request() req,
   ): Promise<void> {
-    return this.interactionsService.removeLike(
-      targetType,
-      targetId,
+    console.log('=== remove_like called ===');
+    console.log('Query params:', { target_type, target_id });
+    console.log('User:', req.user);
+    return this.interactions_service.remove_like(
+      target_type,
+      target_id,
       req.user.id,
     );
   }
 
   @Post('dislike')
   @UseGuards(JwtAuthGuard)
-  async addDislike(
-    @Body() createInteractionDto: CreateInteractionDto,
+  async add_dislike(
+    @Body() create_interaction_dto: CreateInteractionDto,
     @Request() req,
   ): Promise<InteractionResponseDto> {
-    return this.interactionsService.addDislike(
-      createInteractionDto,
+    console.log('=== add_dislike called ===');
+    console.log('Body:', create_interaction_dto);
+    console.log('User:', req.user);
+    return this.interactions_service.add_dislike(
+      create_interaction_dto,
       req.user.id,
     );
   }
 
   @Delete('dislike')
   @UseGuards(JwtAuthGuard)
-  async removeDislike(
-    @Query('targetType') targetType: TargetType,
-    @Query('targetId') targetId: number,
+  async remove_dislike(
+    @Query('target_type') target_type: TargetType,
+    @Query('target_id') target_id: number,
     @Request() req,
   ): Promise<void> {
-    return this.interactionsService.removeDislike(
-      targetType,
-      targetId,
+    console.log('=== remove_dislike called ===');
+    console.log('Query params:', { target_type, target_id });
+    console.log('User:', req.user);
+    return this.interactions_service.remove_dislike(
+      target_type,
+      target_id,
       req.user.id,
     );
   }

@@ -29,7 +29,7 @@ export class DevLogsService {
     });
 
     const interactionCounts =
-      await this.interactionsService.getInteractionCountsForMany(
+      await this.interactionsService.get_interaction_counts_for_many(
         TargetType.DEV_LOG,
         devLogs.map((log) => log.id),
       );
@@ -61,7 +61,7 @@ export class DevLogsService {
       throw new NotFoundException(`Dev log with ID ${id} not found`);
     }
 
-    const interactions = await this.interactionsService.getInteractionCounts(
+    const interactions = await this.interactionsService.get_interaction_counts(
       TargetType.DEV_LOG,
       id,
     );

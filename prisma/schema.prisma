@@ -92,6 +92,7 @@ enum TargetType {
   TOOL
   SIDE_HUSTLE
   DEV_LOG
+  COMMENT
 }
 
 model Like {
