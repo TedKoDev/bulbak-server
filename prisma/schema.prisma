@@ -161,6 +161,7 @@ model User {
 
   toolRequests   ToolRequest[]
   devLogs        DevLog[]
+  blog_posts     BlogPost[]
 
   Like Like[]
   Dislike Dislike[]
@@ -273,11 +274,14 @@ model BlogPost {
   created_at      DateTime      @default(now())
   updated_at      DateTime      @default(now())
   deleted_at      DateTime?
+  author_id       Int?
   keyword         Keyword       @relation(fields: [keyword_id], references: [id])
   blog_channel    BlogChannel   @relation(fields: [blog_channel_id], references: [id])
+  author          User?         @relation(fields: [author_id], references: [id])
   platform_logs   PlatformLog[]
   thumbnails      Thumbnail[]
   buttons         Button[]
+  tags            Tag[]
 }
 
 model PlatformLog {
@@ -363,22 +367,24 @@ model HotIssue {
   created_at  DateTime  @default(now())
   updated_at  DateTime  @default(now())
   deleted_at  DateTime?
-  tags        HotIssueTag[]
+  tags        Tag[]
 }
 
 model Tag {
   id          Int       @id @default(autoincrement())
   name        String    @unique
-  hotIssueTags HotIssueTag[]
-}
+  target_type TargetType
+  target_id   Int
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now())
+  deleted_at  DateTime?
 
-model HotIssueTag {
-  hot_issue_id Int
-  tag_id       Int
-  hot_issue    HotIssue @relation(fields: [hot_issue_id], references: [id])
-  tag          Tag      @relation(fields: [tag_id], references: [id])
+  blog_post   BlogPost? @relation(fields: [target_id], references: [id], map: "tag_blog_post_fkey")
+  hot_issue   HotIssue? @relation(fields: [target_id], references: [id], map: "tag_hot_issue_fkey")
 
-  @@id([hot_issue_id, tag_id])
+  @@unique([target_type, target_id, name])
+  @@index([target_type, target_id])
+  @@index([name])
 }
 
 model Tool {

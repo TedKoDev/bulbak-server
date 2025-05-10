@@ -3,10 +3,11 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   UseGuards,
+  Request,
+  Put,
 } from '@nestjs/common';
 import { BlogPostsService } from './blog-posts.service';
 import {
@@ -24,8 +25,9 @@ export class BlogPostsController {
   @UseGuards(JwtAuthGuard)
   create(
     @Body() create_blog_post_dto: CreateBlogPostDto,
+    @Request() req,
   ): Promise<BlogPostResponseDto> {
-    return this.blog_posts_service.create(create_blog_post_dto);
+    return this.blog_posts_service.create(create_blog_post_dto, req.user.id);
   }
 
   @Get()
@@ -38,7 +40,7 @@ export class BlogPostsController {
     return this.blog_posts_service.findOne(+id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   @UseGuards(JwtAuthGuard)
   update(
     @Param('id') id: string,

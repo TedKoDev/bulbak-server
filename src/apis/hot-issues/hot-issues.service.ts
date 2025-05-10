@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
+import { CreateHotIssueDto, UpdateHotIssueDto } from './dto';
 
 @Injectable()
 export class HotIssuesService {
@@ -7,27 +8,17 @@ export class HotIssuesService {
 
   async findAll() {
     return this.prisma.hotIssue.findMany({
-      where: { deleted_at: null },
       include: {
-        tags: {
-          include: {
-            tag: true,
-          },
-        },
+        tags: true,
       },
-      orderBy: { date: 'desc' },
     });
   }
 
   async findOne(id: number) {
-    const hotIssue = await this.prisma.hotIssue.findFirst({
-      where: { id, deleted_at: null },
+    const hotIssue = await this.prisma.hotIssue.findUnique({
+      where: { id },
       include: {
-        tags: {
-          include: {
-            tag: true,
-          },
-        },
+        tags: true,
       },
     });
 
@@ -38,8 +29,8 @@ export class HotIssuesService {
     return hotIssue;
   }
 
-  async create(data: any) {
-    const { tags, ...hotIssueData } = data;
+  async create(createHotIssueDto: CreateHotIssueDto) {
+    const { tags, ...hotIssueData } = createHotIssueDto;
 
     return this.prisma.$transaction(async (tx) => {
       const hotIssue = await tx.hotIssue.create({
@@ -47,32 +38,25 @@ export class HotIssuesService {
       });
 
       if (tags && tags.length > 0) {
-        for (const tagName of tags) {
-          let tag = await tx.tag.findUnique({
-            where: { name: tagName },
-          });
-
-          if (!tag) {
-            tag = await tx.tag.create({
-              data: { name: tagName },
+        await Promise.all(
+          tags.map(async (tagName) => {
+            await tx.tag.create({
+              data: {
+                name: tagName,
+                target_type: 'HOT_ISSUE',
+                target_id: hotIssue.id,
+              },
             });
-          }
-
-          await tx.hotIssueTag.create({
-            data: {
-              hot_issue_id: hotIssue.id,
-              tag_id: tag.id,
-            },
-          });
-        }
+          }),
+        );
       }
 
       return this.findOne(hotIssue.id);
     });
   }
 
-  async update(id: number, data: any) {
-    const { tags, ...hotIssueData } = data;
+  async update(id: number, updateHotIssueDto: UpdateHotIssueDto) {
+    const { tags, ...hotIssueData } = updateHotIssueDto;
 
     await this.findOne(id);
 
@@ -83,27 +67,25 @@ export class HotIssuesService {
       });
 
       if (tags) {
-        await tx.hotIssueTag.deleteMany({
-          where: { hot_issue_id: id },
+        await tx.tag.deleteMany({
+          where: {
+            target_type: 'HOT_ISSUE',
+            target_id: id,
+          },
         });
 
-        for (const tagName of tags) {
-          let tag = await tx.tag.findUnique({
-            where: { name: tagName },
-          });
-
-          if (!tag) {
-            tag = await tx.tag.create({
-              data: { name: tagName },
-            });
-          }
-
-          await tx.hotIssueTag.create({
-            data: {
-              hot_issue_id: id,
-              tag_id: tag.id,
-            },
-          });
+        if (tags.length > 0) {
+          await Promise.all(
+            tags.map(async (tagName) => {
+              await tx.tag.create({
+                data: {
+                  name: tagName,
+                  target_type: 'HOT_ISSUE',
+                  target_id: id,
+                },
+              });
+            }),
+          );
         }
       }
 
