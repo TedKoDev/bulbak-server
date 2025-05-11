@@ -264,7 +264,7 @@ model BlogChannel {
 
 model BlogPost {
   id              Int         @id @default(autoincrement())
-  keyword_id      Int
+  keyword_id      Int?
   blog_channel_id Int
   title           String
   content         String?
@@ -275,7 +275,7 @@ model BlogPost {
   updated_at      DateTime      @default(now())
   deleted_at      DateTime?
   author_id       Int?
-  keyword         Keyword       @relation(fields: [keyword_id], references: [id])
+  keyword         Keyword?      @relation(fields: [keyword_id], references: [id])
   blog_channel    BlogChannel   @relation(fields: [blog_channel_id], references: [id])
   author          User?         @relation(fields: [author_id], references: [id])
   platform_logs   PlatformLog[]

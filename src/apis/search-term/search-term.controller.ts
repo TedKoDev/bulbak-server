@@ -1,14 +1,18 @@
-import { Body, Controller, Post, HttpCode } from '@nestjs/common';
+import { Body, Controller, Post, Get } from '@nestjs/common';
 import { CreateSearchTermDto } from './dto/create-search-term.dto';
 import { SearchTermService } from './search-term.service';
 
-@Controller('search-term')
+@Controller('search-terms')
 export class SearchTermController {
   constructor(private readonly searchTermService: SearchTermService) {}
 
   @Post()
-  @HttpCode(201)
-  create(@Body() dto: CreateSearchTermDto) {
-    return this.searchTermService.create(dto);
+  create(@Body() createSearchTermDto: CreateSearchTermDto) {
+    return this.searchTermService.create(createSearchTermDto);
+  }
+
+  @Get()
+  findAll() {
+    return this.searchTermService.findAll();
   }
 }
