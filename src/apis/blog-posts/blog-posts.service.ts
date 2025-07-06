@@ -30,9 +30,10 @@ export class BlogPostsService {
     create_blog_post_dto: CreateBlogPostDto,
     author_id: number,
   ): Promise<BlogPostResponseDto> {
-    const { tag_ids, ...blogPostData } = create_blog_post_dto as any;
+    const { tag_names, ...blogPostData } = create_blog_post_dto as any;
 
     console.log('blogPostData', blogPostData);
+    console.log('tag_names', tag_names);
 
     // blog_channel_id 유효성 검사
     const blogChannel = await this.prisma.blogChannel.findUnique({
@@ -45,21 +46,12 @@ export class BlogPostsService {
       );
     }
 
+    // 먼저 BlogPost 생성
     const post = await this.prisma.blogPost.create({
       data: {
         ...blogPostData,
         author_id,
         publish_status: blogPostData.publish_status || PublishStatus.PENDING,
-        tags:
-          tag_ids && tag_ids.length > 0
-            ? {
-                create: tag_ids.map((tagId) => ({
-                  name: tagId.toString(),
-                  target_type: 'BLOG_POST' as const,
-                  target_id: tagId,
-                })),
-              }
-            : undefined,
       },
       include: {
         keyword: true,
@@ -67,7 +59,6 @@ export class BlogPostsService {
         platform_logs: true,
         thumbnails: true,
         buttons: true,
-        tags: true,
         author: {
           select: {
             id: true,
@@ -77,9 +68,30 @@ export class BlogPostsService {
       },
     });
 
+    // 그 다음 태그들 생성 (BlogPost ID가 생성된 후)
+    let tags = [];
+    if (tag_names && tag_names.length > 0) {
+      await this.prisma.tag.createMany({
+        data: tag_names.map((tagName) => ({
+          name: tagName,
+          target_type: 'BLOG_POST' as const,
+          target_id: post.id,
+        })),
+        skipDuplicates: true, // 중복된 태그는 건너뛰기
+      });
+
+      // 태그 조회
+      tags = await this.prisma.tag.findMany({
+        where: {
+          target_type: 'BLOG_POST',
+          target_id: post.id,
+        },
+      });
+    }
+
     return {
       ...post,
-      tags: post.tags.map((t) => ({
+      tags: tags.map((t) => ({
         id: t.id,
         name: t.name,
       })),
@@ -103,7 +115,6 @@ export class BlogPostsService {
         platform_logs: true,
         thumbnails: true,
         buttons: true,
-        tags: true,
         author: {
           select: {
             id: true,
@@ -116,7 +127,7 @@ export class BlogPostsService {
       },
     });
 
-    const [view_counts, interactions] = await Promise.all([
+    const [view_counts, interactions, allTags] = await Promise.all([
       this.views_service.getViewCountsForMany(
         TargetType.BLOG_POST,
         posts.map((post) => post.id),
@@ -129,23 +140,32 @@ export class BlogPostsService {
           ),
         ),
       ),
+      this.prisma.tag.findMany({
+        where: {
+          target_type: 'BLOG_POST',
+          target_id: { in: posts.map((post) => post.id) },
+        },
+      }),
     ]);
 
-    return posts.map((post, index) => ({
-      ...post,
-      tags: post.tags.map((t) => ({
-        id: t.tag.id,
-        name: t.tag.name,
-      })),
-      author: post.author
-        ? {
-            id: post.author.id,
-            username: post.author.username,
-          }
-        : undefined,
-      view_count: view_counts.get(post.id) || 0,
-      interactions: interactions[index],
-    }));
+    return posts.map((post, index) => {
+      const postTags = allTags.filter((tag) => tag.target_id === post.id);
+      return {
+        ...post,
+        tags: postTags.map((t) => ({
+          id: t.id,
+          name: t.name,
+        })),
+        author: post.author
+          ? {
+              id: post.author.id,
+              username: post.author.username,
+            }
+          : undefined,
+        view_count: view_counts.get(post.id) || 0,
+        interactions: interactions[index],
+      };
+    });
   }
 
   async findOne(id: number): Promise<BlogPostWithStats> {
@@ -157,7 +177,6 @@ export class BlogPostsService {
         platform_logs: true,
         thumbnails: true,
         buttons: true,
-        tags: true,
         author: true,
       },
     });
@@ -166,19 +185,25 @@ export class BlogPostsService {
       return null;
     }
 
-    const [view_count, interactions] = await Promise.all([
+    const [view_count, interactions, tags] = await Promise.all([
       this.views_service.getViewCount(TargetType.BLOG_POST, id),
       this.interactions_service.get_interaction_counts(
         TargetType.BLOG_POST,
         id,
       ),
+      this.prisma.tag.findMany({
+        where: {
+          target_type: 'BLOG_POST',
+          target_id: id,
+        },
+      }),
     ]);
 
     return {
       ...post,
-      tags: post.tags.map((t) => ({
-        id: t.tag.id,
-        name: t.tag.name,
+      tags: tags.map((t) => ({
+        id: t.id,
+        name: t.name,
       })),
       author: post.author
         ? {
@@ -195,12 +220,12 @@ export class BlogPostsService {
     id: number,
     update_blog_post_dto: UpdateBlogPostDto,
   ): Promise<BlogPostResponseDto> {
-    // Destructure to remove tag_ids and any unexpected tags field from update data
+    // Destructure to remove tag_names and any unexpected tags field from update data
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { tag_ids, tags, ...blogPostData } = update_blog_post_dto as any;
+    const { tag_names, tags, ...blogPostData } = update_blog_post_dto as any;
 
-    // tag_ids가 undefined가 아닌 경우에만 tags 업데이트
-    if (tag_ids !== undefined) {
+    // tag_names가 undefined가 아닌 경우에만 tags 업데이트
+    if (tag_names !== undefined) {
       // 먼저 기존 태그들을 삭제
       await this.prisma.tag.deleteMany({
         where: {
@@ -210,10 +235,10 @@ export class BlogPostsService {
       });
 
       // 새로운 태그들을 생성
-      if (tag_ids.length > 0) {
+      if (tag_names.length > 0) {
         await this.prisma.tag.createMany({
-          data: tag_ids.map((tagId) => ({
-            name: tagId.toString(),
+          data: tag_names.map((tagName) => ({
+            name: tagName,
             target_type: 'BLOG_POST',
             target_id: id,
           })),
@@ -233,14 +258,21 @@ export class BlogPostsService {
         platform_logs: true,
         thumbnails: true,
         buttons: true,
-        tags: true,
         author: true,
+      },
+    });
+
+    // 태그 조회
+    const postTags = await this.prisma.tag.findMany({
+      where: {
+        target_type: 'BLOG_POST',
+        target_id: id,
       },
     });
 
     return {
       ...post,
-      tags: post.tags.map((t) => ({
+      tags: postTags.map((t) => ({
         id: t.id,
         name: t.name,
       })),
@@ -253,14 +285,19 @@ export class BlogPostsService {
       data: {
         deleted_at: new Date(),
       },
-      include: {
-        tags: true,
+    });
+
+    // 태그 조회
+    const postTags = await this.prisma.tag.findMany({
+      where: {
+        target_type: 'BLOG_POST',
+        target_id: id,
       },
     });
 
     return {
       ...post,
-      tags: post.tags.map((t) => ({
+      tags: postTags.map((t) => ({
         id: t.id,
         name: t.name,
       })),
@@ -273,15 +310,12 @@ export class BlogPostsService {
         keyword_id,
         deleted_at: null,
       },
-      include: {
-        tags: true,
-      },
       orderBy: {
         created_at: 'desc',
       },
     });
 
-    const [view_counts, interactions] = await Promise.all([
+    const [view_counts, interactions, allTags] = await Promise.all([
       this.views_service.getViewCountsForMany(
         TargetType.BLOG_POST,
         posts.map((post) => post.id),
@@ -294,17 +328,26 @@ export class BlogPostsService {
           ),
         ),
       ),
+      this.prisma.tag.findMany({
+        where: {
+          target_type: 'BLOG_POST',
+          target_id: { in: posts.map((post) => post.id) },
+        },
+      }),
     ]);
 
-    return posts.map((post, index) => ({
-      ...post,
-      tags: post.tags.map((t) => ({
-        id: t.id,
-        name: t.name,
-      })),
-      view_count: view_counts.get(post.id) || 0,
-      interactions: interactions[index],
-    }));
+    return posts.map((post, index) => {
+      const postTags = allTags.filter((tag) => tag.target_id === post.id);
+      return {
+        ...post,
+        tags: postTags.map((t) => ({
+          id: t.id,
+          name: t.name,
+        })),
+        view_count: view_counts.get(post.id) || 0,
+        interactions: interactions[index],
+      };
+    });
   }
 
   async findByBlogChannel(
@@ -315,15 +358,12 @@ export class BlogPostsService {
         blog_channel_id,
         deleted_at: null,
       },
-      include: {
-        tags: true,
-      },
       orderBy: {
         created_at: 'desc',
       },
     });
 
-    const [view_counts, interactions] = await Promise.all([
+    const [view_counts, interactions, allTags] = await Promise.all([
       this.views_service.getViewCountsForMany(
         TargetType.BLOG_POST,
         posts.map((post) => post.id),
@@ -336,16 +376,25 @@ export class BlogPostsService {
           ),
         ),
       ),
+      this.prisma.tag.findMany({
+        where: {
+          target_type: 'BLOG_POST',
+          target_id: { in: posts.map((post) => post.id) },
+        },
+      }),
     ]);
 
-    return posts.map((post, index) => ({
-      ...post,
-      tags: post.tags.map((t) => ({
-        id: t.id,
-        name: t.name,
-      })),
-      view_count: view_counts.get(post.id) || 0,
-      interactions: interactions[index],
-    }));
+    return posts.map((post, index) => {
+      const postTags = allTags.filter((tag) => tag.target_id === post.id);
+      return {
+        ...post,
+        tags: postTags.map((t) => ({
+          id: t.id,
+          name: t.name,
+        })),
+        view_count: view_counts.get(post.id) || 0,
+        interactions: interactions[index],
+      };
+    });
   }
 }
