@@ -22,13 +22,14 @@ import { S3Module } from './apis/s3/s3.module';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaService } from './common/prisma.service';
 import { TagsModule } from './apis/tags/tags.module';
-
+import { StocksModule } from './apis/stocks/stocks.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
     SearchTermModule,
+    StocksModule,
     CrawlDataModule,
     KeywordModule,
     AuthModule,

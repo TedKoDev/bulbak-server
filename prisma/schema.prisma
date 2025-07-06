@@ -95,6 +95,73 @@ enum TargetType {
   COMMENT
 }
 
+enum StockType {
+  GAINER
+  LOSER
+}
+
+enum StockIndex {
+  SP500
+  NASDAQ100
+}
+
+enum KRMarketType {
+  KOSPI
+  KOSDAQ
+}
+
+enum CorrelationType {
+  POSITIVE
+  NEGATIVE
+  NEUTRAL
+}
+
+model StockUS {
+  id        Int      @id @default(autoincrement())
+  symbol    String   @unique
+  name      String
+  change    Float
+  type      StockType // 'GAINER' | 'LOSER'
+  index     StockIndex // 'SP500' | 'NASDAQ100'
+  date      DateTime
+}
+
+model SP500Company {
+  id        Int      @id @default(autoincrement())
+  symbol    String   @unique
+  name      String
+  krname    String
+  sector    String?
+  createdAt DateTime @default(now())
+  mappings  StockKRMapping[]
+}
+
+model StockKRMapping {
+  id            Int      @id @default(autoincrement())
+  nasdaqCompany NasdaqCompany? @relation(fields: [nasdaqSymbol], references: [symbol])
+  nasdaqSymbol  String?
+  sp500Company  SP500Company?  @relation(fields: [sp500Symbol], references: [symbol])
+  sp500Symbol   String?
+  krName        String
+  krSymbol      String
+  reason        String
+  marketType    KRMarketType?
+  correlationType CorrelationType? // ✅ 새 필드: 연관 유형
+
+  @@index([nasdaqSymbol])
+  @@index([sp500Symbol])
+}
+
+model NasdaqCompany {
+  id            Int      @id @default(autoincrement())
+  symbol        String   @unique
+  name          String
+  krname        String
+  sector        String?
+  createdAt     DateTime @default(now())
+  mappings      StockKRMapping[]
+}
+
 model View {
   id          Int         @id @default(autoincrement())
   target_type TargetType
