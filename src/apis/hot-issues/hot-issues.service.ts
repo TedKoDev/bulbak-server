@@ -7,26 +7,42 @@ export class HotIssuesService {
   constructor(private prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.hotIssue.findMany({
-      include: {
-        tags: true,
-      },
-    });
+    const hotIssues = await this.prisma.hotIssue.findMany();
+
+    // 각 HotIssue에 대해 tags를 수동으로 가져오기
+    const hotIssuesWithTags = await Promise.all(
+      hotIssues.map(async (hotIssue) => {
+        const tags = await this.prisma.tag.findMany({
+          where: {
+            target_type: 'HOT_ISSUE',
+            target_id: hotIssue.id,
+          },
+        });
+        return { ...hotIssue, tags };
+      }),
+    );
+
+    return hotIssuesWithTags;
   }
 
   async findOne(id: number) {
     const hotIssue = await this.prisma.hotIssue.findUnique({
       where: { id },
-      include: {
-        tags: true,
-      },
     });
 
     if (!hotIssue) {
       throw new NotFoundException(`Hot issue with ID ${id} not found`);
     }
 
-    return hotIssue;
+    // tags를 수동으로 가져오기
+    const tags = await this.prisma.tag.findMany({
+      where: {
+        target_type: 'HOT_ISSUE',
+        target_id: id,
+      },
+    });
+
+    return { ...hotIssue, tags };
   }
 
   async create(createHotIssueDto: CreateHotIssueDto) {
