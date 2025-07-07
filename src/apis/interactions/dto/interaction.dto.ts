@@ -1,5 +1,5 @@
 import { TargetType } from '@prisma/client';
-import { IsEnum, IsNumber, IsDate } from 'class-validator';
+import { IsEnum, IsNumber, IsDate, IsOptional, IsBoolean } from 'class-validator';
 
 export class CreateInteractionDto {
   @IsEnum(TargetType)
@@ -24,6 +24,10 @@ export class InteractionResponseDto {
 
   @IsDate()
   created_at: Date;
+
+  @IsOptional()
+  @IsBoolean()
+  deleted?: boolean;
 }
 
 export class InteractionCountsDto {

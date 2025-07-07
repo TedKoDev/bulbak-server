@@ -4,7 +4,7 @@ import { PrismaService } from '../../common/prisma.service';
 import { CreateKeywordDto, KeywordStatus } from './dto/create-keyword.dto';
 import { normalizeText } from './utils/normalize';
 import { subHours } from 'date-fns';
-import type { DataType } from '.prisma/client';
+import type { DataType } from '@prisma/client';
 
 @Injectable()
 export class KeywordService {

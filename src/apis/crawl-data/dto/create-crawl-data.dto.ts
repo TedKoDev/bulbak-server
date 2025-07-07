@@ -1,4 +1,4 @@
-import { DataType } from '.prisma/client';
+import { DataType } from '@prisma/client';
 
 // model CrawledData {
 //   id           Int       @id @default(autoincrement())

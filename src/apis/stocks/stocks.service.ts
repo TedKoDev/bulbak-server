@@ -35,10 +35,14 @@ export class StocksService {
   }
 
   async getKRMappingsByUSSymbol(symbol: string) {
-    const stock = await this.prisma.stockUS.findUnique({
-      where: { symbol },
+    return this.prisma.stockKRMapping.findMany({
+      where: {
+        OR: [
+          { nasdaqSymbol: symbol },
+          { sp500Symbol: symbol },
+        ],
+      },
     });
-    return stock?.mappings;
   }
 
   async getKRMappingsByNasdaqSymbol(symbol: string) {

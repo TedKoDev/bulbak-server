@@ -102,7 +102,7 @@ export class DevLogsService {
     return this.prisma.devLog.create({
       data: {
         ...data,
-        author_id: authorId,
+        author_id: parseInt(authorId),
       },
       include: {
         author: {
@@ -118,7 +118,7 @@ export class DevLogsService {
   async update(id: number, data: any, userId: string) {
     const devLog = await this.findOne(id);
 
-    if (devLog.author_id !== userId) {
+    if (devLog.author_id !== Number(userId)) {
       throw new ForbiddenException('You can only update your own dev logs');
     }
 
@@ -139,7 +139,7 @@ export class DevLogsService {
   async remove(id: number, userId: string) {
     const devLog = await this.findOne(id);
 
-    if (devLog.author_id !== userId) {
+    if (devLog.author_id !== Number(userId)) {
       throw new ForbiddenException('You can only delete your own dev logs');
     }
 

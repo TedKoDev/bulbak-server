@@ -8,7 +8,11 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [
+      'http://localhost:3000',
+      'http://devoouphub.com',
+      'https://devoouphub.com'
+    ],
     credentials: true,
   });
 
@@ -23,7 +27,9 @@ async function bootstrap() {
   // Enable cookie parsing
   app.use(cookieParser());
 
-  await app.listen(process.env.PORT || 4000);
-  console.log(`Application is running on: ${await app.getUrl()}`);
+  const port = process.env.PORT || 4000;
+  const host = process.env.HOST || '127.0.0.1'; // localhost에서만 접근 가능
+  await app.listen(port, host);
+  console.log(`Application is running on: http://${host}:${port}`);
 }
 bootstrap();
